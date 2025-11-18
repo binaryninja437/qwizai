@@ -5,11 +5,11 @@ export const Header: React.FC = () => {
     return (
         <header className="text-center fade-in">
             <div className="mb-8">
-                <div className="inline-block bg-white p-4 rounded-3xl shadow-2xl">
+                <div className="inline-block glass-effect p-6 rounded-3xl shadow-2xl border-2 border-purple-400/50">
                     <img
                         src="/newlogo.png"
                         alt="QwizAI"
-                        className="h-28 w-auto mx-auto"
+                        className="h-28 w-auto mx-auto drop-shadow-2xl"
                     />
                 </div>
             </div>
