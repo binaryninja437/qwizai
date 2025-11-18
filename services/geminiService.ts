@@ -1,22 +1,22 @@
-const API_KEY = import.meta.env.VITE_NVIDIA_API_KEY;
+const API_KEY = import.meta.env.VITE_GROQ_API_KEY;
 
-console.log("🔑 NVIDIA API Key Status:", {
+console.log("🔑 Groq API Key Status:", {
     isLoaded: !!API_KEY,
-    keyStart: API_KEY ? API_KEY.substring(0, 15) + "..." : "❌ MISSING"
+    keyStart: API_KEY ? API_KEY.substring(0, 10) + "..." : "❌ MISSING"
 });
 
 if (!API_KEY) {
-    throw new Error("❌ VITE_NVIDIA_API_KEY environment variable is not set!");
+    throw new Error("❌ VITE_GROQ_API_KEY environment variable is not set!");
 }
 
-const NVIDIA_API_URL = "https://integrate.api.nvidia.com/v1/chat/completions";
+const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
 
 export async function getAnswerFromImage(base64ImageData: string, mimeType: string): Promise<string> {
-    console.log("📤 Starting NVIDIA API request...");
+    console.log("🚀 Starting Groq API request...");
 
     try {
         const payload = {
-            model: "meta/llama-3.2-90b-vision-instruct",
+            model: "llama-3.2-90b-vision-preview",
             messages: [{
                 role: "user",
                 content: [
@@ -33,19 +33,16 @@ export async function getAnswerFromImage(base64ImageData: string, mimeType: stri
                 ]
             }],
             max_tokens: 2048,
-            temperature: 0.7,
-            top_p: 1,
-            stream: false
+            temperature: 0.7
         };
 
-        console.log("📡 Sending request to NVIDIA API...");
+        console.log("📡 Sending request to Groq API...");
 
-        const response = await fetch(NVIDIA_API_URL, {
+        const response = await fetch(GROQ_API_URL, {
             method: "POST",
             headers: {
                 "Authorization": `Bearer ${API_KEY}`,
-                "Content-Type": "application/json",
-                "Accept": "application/json"
+                "Content-Type": "application/json"
             },
             body: JSON.stringify(payload)
         });
@@ -59,12 +56,12 @@ export async function getAnswerFromImage(base64ImageData: string, mimeType: stri
             let errorMessage;
             try {
                 const errorData = JSON.parse(errorText);
-                errorMessage = errorData.error?.message || errorData.detail || errorData.message || "Unknown error";
+                errorMessage = errorData.error?.message || errorData.message || "Unknown error";
             } catch {
                 errorMessage = errorText || response.statusText;
             }
 
-            throw new Error(`NVIDIA API Error (${response.status}): ${errorMessage}`);
+            throw new Error(`Groq API Error (${response.status}): ${errorMessage}`);
         }
 
         const data = await response.json();
@@ -75,20 +72,20 @@ export async function getAnswerFromImage(base64ImageData: string, mimeType: stri
             throw new Error("The API returned an empty response.");
         }
 
-        console.log("✅ Answer generated successfully");
+        console.log("✅ Answer generated successfully!");
         return data.choices[0].message.content;
 
     } catch (error) {
         console.error("❌ Full error:", error);
 
         if (error instanceof TypeError && error.message.includes('fetch')) {
-            throw new Error("Network error: Cannot reach NVIDIA API. Check your internet connection.");
+            throw new Error("Network error: Cannot reach Groq API. Check your internet connection.");
         }
 
         if (error instanceof Error) {
             throw error;
         }
 
-        throw new Error("An unknown error occurred with NVIDIA API.");
+        throw new Error("An unknown error occurred with Groq API.");
     }
 }
