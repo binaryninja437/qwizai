@@ -1,0 +1,8 @@
+
+{
+  "name": "QwizAi",
+  "description": "QwizAi uses images from your camera or file uploads to answer reasoning and multiple-choice questions (MCQs) with the power of Gemini.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
