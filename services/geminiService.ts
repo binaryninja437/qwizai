@@ -1,48 +1,94 @@
+const API_KEY = import.meta.env.VITE_NVIDIA_API_KEY;
 
-import { GoogleGenAI } from "@google/genai";
-
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-
-console.log("Environment check:", {
-    hasKey: !!API_KEY,
-    keyPrefix: API_KEY ? API_KEY.substring(0, 10) + "..." : "MISSING",
-    allEnvVars: import.meta.env
+console.log("🔑 NVIDIA API Key Status:", {
+    isLoaded: !!API_KEY,
+    keyStart: API_KEY ? API_KEY.substring(0, 15) + "..." : "❌ MISSING"
 });
 
 if (!API_KEY) {
-    throw new Error("VITE_GEMINI_API_KEY environment variable is not set. Check your .env.local file.");
+    throw new Error("❌ VITE_NVIDIA_API_KEY environment variable is not set!");
 }
 
-const ai = new GoogleGenAI({ apiKey: API_KEY });
+const NVIDIA_API_URL = "https://integrate.api.nvidia.com/v1/chat/completions";
 
 export async function getAnswerFromImage(base64ImageData: string, mimeType: string): Promise<string> {
+    console.log("📤 Starting NVIDIA API request...");
+
     try {
-        const imagePart = {
-            inlineData: {
-                data: base64ImageData,
-                mimeType: mimeType,
+        const payload = {
+            model: "meta/llama-3.2-90b-vision-instruct",
+            messages: [{
+                role: "user",
+                content: [
+                    {
+                        type: "text",
+                        text: "You are an expert AI agent specializing in reasoning and solving multiple-choice questions (MCQs). Analyze the provided image and answer any questions within it. Provide a clear and concise explanation for your reasoning. If there are no clear questions, describe what you see and what potential questions could be asked."
+                    },
+                    {
+                        type: "image_url",
+                        image_url: {
+                            url: `data:${mimeType};base64,${base64ImageData}`
+                        }
+                    }
+                ]
+            }],
+            max_tokens: 2048,
+            temperature: 0.7,
+            top_p: 1,
+            stream: false
+        };
+
+        console.log("📡 Sending request to NVIDIA API...");
+
+        const response = await fetch(NVIDIA_API_URL, {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${API_KEY}`,
+                "Content-Type": "application/json",
+                "Accept": "application/json"
             },
-        };
-
-        const textPart = {
-            text: "You are an expert AI agent specializing in reasoning and solving multiple-choice questions (MCQs). Analyze the provided image and answer any questions within it. Provide a clear and concise explanation for your reasoning. If there are no clear questions, describe what you see and what potential questions could be asked.",
-        };
-
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.0-flash-exp',
-            contents: [{ parts: [imagePart, textPart] }],
+            body: JSON.stringify(payload)
         });
 
-        if (!response.text) {
-          throw new Error("The API returned an empty response.");
+        console.log("📥 Response status:", response.status, response.statusText);
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error("❌ Error response:", errorText);
+
+            let errorMessage;
+            try {
+                const errorData = JSON.parse(errorText);
+                errorMessage = errorData.error?.message || errorData.detail || errorData.message || "Unknown error";
+            } catch {
+                errorMessage = errorText || response.statusText;
+            }
+
+            throw new Error(`NVIDIA API Error (${response.status}): ${errorMessage}`);
         }
 
-        return response.text;
-    } catch (error) {
-        console.error("Error calling Gemini API:", error);
-        if (error instanceof Error) {
-            throw new Error(`Gemini API Error: ${error.message}`);
+        const data = await response.json();
+        console.log("✅ Response received successfully");
+
+        if (!data.choices || !data.choices[0]?.message?.content) {
+            console.error("❌ Empty response data:", data);
+            throw new Error("The API returned an empty response.");
         }
-        throw new Error("An unknown error occurred while communicating with the Gemini API.");
+
+        console.log("✅ Answer generated successfully");
+        return data.choices[0].message.content;
+
+    } catch (error) {
+        console.error("❌ Full error:", error);
+
+        if (error instanceof TypeError && error.message.includes('fetch')) {
+            throw new Error("Network error: Cannot reach NVIDIA API. Check your internet connection.");
+        }
+
+        if (error instanceof Error) {
+            throw error;
+        }
+
+        throw new Error("An unknown error occurred with NVIDIA API.");
     }
 }
