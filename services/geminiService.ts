@@ -1,23 +1,21 @@
-const API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY;
+const API_KEY = import.meta.env.VITE_NVIDIA_API_KEY;
 
 if (!API_KEY) {
-    throw new Error("VITE_OPENROUTER_API_KEY environment variable is not set.");
+    throw new Error("VITE_NVIDIA_API_KEY environment variable is not set.");
 }
 
-const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions";
+const NVIDIA_API_URL = "https://integrate.api.nvidia.com/v1/chat/completions";
 
 export async function getAnswerFromImage(base64ImageData: string, mimeType: string): Promise<string> {
     try {
-        const response = await fetch(OPENROUTER_API_URL, {
+        const response = await fetch(NVIDIA_API_URL, {
             method: "POST",
             headers: {
                 "Authorization": `Bearer ${API_KEY}`,
                 "Content-Type": "application/json",
-                "HTTP-Referer": window.location.origin,
-                "X-Title": "QwizAI",
             },
             body: JSON.stringify({
-                model: "anthropic/claude-3.5-sonnet",
+                model: "meta/llama-3.2-90b-vision-instruct",
                 messages: [
                     {
                         role: "user",
@@ -34,13 +32,15 @@ export async function getAnswerFromImage(base64ImageData: string, mimeType: stri
                             }
                         ]
                     }
-                ]
+                ],
+                max_tokens: 1024,
+                temperature: 0.7
             })
         });
 
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({ error: "Unknown error" }));
-            throw new Error(`OpenRouter API Error: ${errorData.error?.message || response.statusText}`);
+            throw new Error(`NVIDIA API Error: ${errorData.error?.message || errorData.detail || response.statusText}`);
         }
 
         const data = await response.json();
@@ -51,10 +51,10 @@ export async function getAnswerFromImage(base64ImageData: string, mimeType: stri
 
         return data.choices[0].message.content;
     } catch (error) {
-        console.error("Error calling OpenRouter API:", error);
+        console.error("Error calling NVIDIA API:", error);
         if (error instanceof Error) {
-            throw new Error(`OpenRouter API Error: ${error.message}`);
+            throw new Error(`NVIDIA API Error: ${error.message}`);
         }
-        throw new Error("An unknown error occurred while communicating with OpenRouter API.");
+        throw new Error("An unknown error occurred while communicating with NVIDIA API.");
     }
 }
