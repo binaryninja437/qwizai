@@ -3,25 +3,23 @@ import React from 'react';
 
 export const Header: React.FC = () => {
     return (
-        <header className="text-center">
-            <div className="flex justify-center mb-6">
-                <div className="bg-white/95 p-6 rounded-2xl shadow-2xl border-4 border-cyan-400">
+        <header className="text-center fade-in">
+            <div className="mb-8">
+                <div className="inline-block bg-white p-4 rounded-3xl shadow-2xl">
                     <img
-                        src="/newlogo.png"
-                        alt="QwizAI Logo"
-                        className="h-24 sm:h-32 w-auto"
-                        onError={(e) => {
-                            console.error('Logo failed to load');
-                            e.currentTarget.style.display = 'none';
-                        }}
+                        src="newlogo.png"
+                        alt="QwizAI"
+                        className="h-28 w-auto mx-auto"
                     />
                 </div>
             </div>
-            <h1 className="text-3xl sm:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-blue-400 mb-2">
-                QwizAI
+            <h1 className="text-4xl md:text-5xl font-extrabold mb-3">
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-blue-400 to-purple-400 shimmer">
+                    QwizAI
+                </span>
             </h1>
-            <p className="mt-2 text-lg text-cyan-100">
-                Your visual assistant for MCQs and complex reasoning.
+            <p className="text-lg md:text-xl text-cyan-100 font-light">
+                Your Smart AI Quiz Assistant
             </p>
         </header>
     );
